@@ -1,32 +1,114 @@
-#calculadora table {
-  margin: 0 auto;
-  padding: 0;
-  box-sizing: content-box;
-  background-color: #CFD8DC; 
-  border: 0 double black;
-  font-size: 1.5625rem;
+const result = document.querySelector(".resultado");
+const buttons = document.querySelectorAll(".buttons button");
+
+let currentNumber = "";
+let firstOperand = null;
+let operator = null;
+let restart = false;
+
+function updateResult(originClear = false){
+    result.innerText = originClear ? 0 : currentNumber.replace(".",",");
 }
 
-#calculadora tr {
-  width: 100%;
-  height:100%;
+function addDigit(digit){
+    if (digit === "," && (currentNumber.includes(",") || !currentNumber)) return;
+
+    if (restart){
+        currentNumber = digit;
+        restart = false;
+    } else {
+        currentNumber += digit;
+    }
+
+    updateResult();
 }
 
-#calculadora tr td input {
-  width: 100%;
-  height:100%;
+function setOperator(newOperator) {
+    if (currentNumber){
+        calculate();
+
+        firstOperand = parseFloat(currentNumber.replace(",","."));
+        currentNumber="";
+    }
+
+    operator = newOperator;
 }
 
-#calculadora td input:hover {
-  color: #fff;
-  background-color: #546E7A;
+function calculate(){
+    if(operator === null || firstOperand === null) return;
+    let secondOperand = parseFloat(currentNumber.replace(",","."));
+    let resultValue;
+
+    switch (operator) {
+        case "+":
+            resultValue = firstOperand + secondOperand;
+            break;
+        case "-":
+            resultValue = firstOperand - secondOperand;
+            break;
+        case "x":
+            resultValue = firstOperand * secondOperand;
+            break;
+        case "÷":
+            resultValue = firstOperand / secondOperand;
+            break;
+        default:
+            return;
+    }
+
+    if(resultValue.toString().split(".")[1]?.length > 5){
+        currentNumber = parseFloat(resultValue.toFixed(5)).toString();
+    } else {
+        currentNumber = resultValue.toString();
+    }
+
+    operator = null;
+    firstOperand = null;
+    restart = true;
+    percentageValue = null;
+    updateResult();
 }
 
-#calculadora td input#tela {
-  text-align: right;
+function clearCalculator(){
+    currentNumber = "";
+    firstOperand = null;
+    operator = null;
+    updateResult(true);
 }
 
-#calculadora td input#tela:hover {
-  color: #000;
-  background-color: #fff;
-}
+function setPercenntage(){
+    let result = parseFloat(currentNumber) / 100;
+
+    if (["+", "-"].includes(operator)) {
+      result = result * (firstOperand || 1);
+    }
+  
+    if (result.toString().split(".")[1]?.length > 5) {
+      result = result.toFixed(5).toString();
+    }
+  
+    currentNumber = result.toString();
+    updateResult();
+  }
+  
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const buttonText = button.innerText;
+      if (/^[0-9,]+$/.test(buttonText)) {
+        addDigit(buttonText);
+      } else if (["+", "-", "×", "÷"].includes(buttonText)) {
+        setOperator(buttonText);
+      } else if (buttonText === "=") {
+        calculate();
+      } else if (buttonText === "C") {
+        clearCalculator();
+      } else if (buttonText === "±") {
+        currentNumber = (
+          parseFloat(currentNumber || firstOperand) * -1
+        ).toString();
+        updateResult();
+      } else if (buttonText === "%") {
+        setPercentage();
+      }
+    });
+  });
